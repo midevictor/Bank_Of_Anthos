@@ -147,3 +147,5 @@ The following button opens up an interactive tutorial showing how to deploy Bank
 - [Architecture: Creating and deploying secured applications](https://cloud.google.com/architecture/security-foundations/creating-deploying-secured-apps)
 - [Keynote @ Google Cloud Next '20: Building trust for speedy innovation](https://www.youtube.com/watch?v=7QR1z35h_yc)
 - [Workshop @ IstioCon '22: Manage and secure distributed services with ASM](https://www.youtube.com/watch?v=--mPdAxovfE)
+#   B a n k _ O f _ A n t h o s  
+ 
