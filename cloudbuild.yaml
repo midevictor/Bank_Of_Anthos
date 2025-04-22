@@ -1,3 +1,98 @@
+# # Copyright 2022 Google LLC
+# #
+# # Licensed under the Apache License, Version 2.0 (the "License");
+# # you may not use this file except in compliance with the License.
+# # You may obtain a copy of the License at
+# #
+# #      http://www.apache.org/licenses/LICENSE-2.0
+# #
+# # Unless required by applicable law or agreed to in writing, software
+# # distributed under the License is distributed on an "AS IS" BASIS,
+# # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# # See the License for the specific language governing permissions and
+# # limitations under the License.
+
+# steps:
+#   # Build frontend image
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', './src/frontend']
+
+#   # Build ledger-db image
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/ledger-db:$SHORT_SHA', './src/ledger-db']
+
+#   # Build accounts-db image
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/accounts-db:$SHORT_SHA', './src/accounts-db']
+
+#   # Build additional services
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA', './src/ledgerwriter']
+  
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA', './src/balancereader']
+  
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA', './src/transactionhistory']
+
+#   # Push images to Container Registry
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/ledger-db:$SHORT_SHA']
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/accounts-db:$SHORT_SHA']
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA']
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA']
+#   - name: 'gcr.io/cloud-builders/docker'
+#     args: ['push', 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA']
+
+#   # Get GKE credentials
+#   - name: 'gcr.io/cloud-builders/gcloud'
+#     args:
+#     - 'container'
+#     - 'clusters'
+#     - 'get-credentials'
+#     - 'bank-of-anthos'
+#     - '--zone=us-central1-a'
+#     - '--project=$PROJECT_ID'
+
+#   # Update deployments
+#   - name: 'gcr.io/cloud-builders/kubectl'
+#     args:
+#     - 'set'
+#     - 'image'
+#     - 'deployment/frontend'
+#     - 'frontend=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+  
+#   - name: 'gcr.io/cloud-builders/kubectl'
+#     args:
+#     - 'set'
+#     - 'image'
+#     - 'deployment/ledgerwriter'
+#     - 'ledgerwriter=gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA'
+  
+#   - name: 'gcr.io/cloud-builders/kubectl'
+#     args:
+#     - 'set'
+#     - 'image'
+#     - 'deployment/balancereader'
+#     - 'balancereader=gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA'
+
+# images:
+#   - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+#   - 'gcr.io/$PROJECT_ID/ledger-db:$SHORT_SHA'
+#   - 'gcr.io/$PROJECT_ID/accounts-db:$SHORT_SHA'
+#   - 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA'
+#   - 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA'
+#   - 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA'
+
+# options:
+#   logging: CLOUD_LOGGING_ONLY
+
+
 # Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,38 +111,43 @@ steps:
   # Build frontend image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', './src/frontend']
+    id: 'build-frontend'
+    waitFor: ['-']
 
-  # Build ledger-db image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ledger-db:$SHORT_SHA', './src/ledger-db']
-
-  # Build accounts-db image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/accounts-db:$SHORT_SHA', './src/accounts-db']
-
-  # Build additional services
+  # Build ledgerwriter image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA', './src/ledgerwriter']
+    id: 'build-ledgerwriter'
+    waitFor: ['-']
   
+  # Build balancereader image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA', './src/balancereader']
+    id: 'build-balancereader'
+    waitFor: ['-']
   
+  # Build transactionhistory image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA', './src/transactionhistory']
+    id: 'build-transactionhistory'
+    waitFor: ['-']
 
   # Push images to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/ledger-db:$SHORT_SHA']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/accounts-db:$SHORT_SHA']
+    waitFor: ['build-frontend']
+  
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA']
+    waitFor: ['build-ledgerwriter']
+  
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA']
+    waitFor: ['build-balancereader']
+  
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA']
+    waitFor: ['build-transactionhistory']
 
   # Get GKE credentials
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -58,6 +158,8 @@ steps:
     - 'bank-of-anthos'
     - '--zone=us-central1-a'
     - '--project=$PROJECT_ID'
+    id: 'get-credentials'
+    waitFor: ['-']
 
   # Update deployments
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -66,6 +168,7 @@ steps:
     - 'image'
     - 'deployment/frontend'
     - 'frontend=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+    waitFor: ['get-credentials', 'build-frontend']
   
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
@@ -73,6 +176,7 @@ steps:
     - 'image'
     - 'deployment/ledgerwriter'
     - 'ledgerwriter=gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA'
+    waitFor: ['get-credentials', 'build-ledgerwriter']
   
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
@@ -80,11 +184,10 @@ steps:
     - 'image'
     - 'deployment/balancereader'
     - 'balancereader=gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA'
+    waitFor: ['get-credentials', 'build-balancereader']
 
 images:
   - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
-  - 'gcr.io/$PROJECT_ID/ledger-db:$SHORT_SHA'
-  - 'gcr.io/$PROJECT_ID/accounts-db:$SHORT_SHA'
   - 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA'
   - 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA'
   - 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA'
