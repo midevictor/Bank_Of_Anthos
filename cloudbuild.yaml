@@ -108,46 +108,41 @@
 # limitations under the License.
 
 steps:
+  # List directory contents to debug
+  - name: 'gcr.io/cloud-builders/bash'
+    args: ['ls', '-la']
+    id: 'list-root'
+  
+  - name: 'gcr.io/cloud-builders/bash'
+    args: ['ls', '-la', 'src']
+    id: 'list-src'
+    waitFor: ['list-root']
+
   # Build frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', './src/frontend']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '-f', 'src/frontend/Dockerfile', '.']
     id: 'build-frontend'
-    waitFor: ['-']
+    waitFor: ['list-src']
 
-  # Build ledgerwriter image
+  # Build ledgerwriter image (if exists)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA', './src/ledgerwriter']
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        if [ -d "src/ledgerwriter" ]; then
+          docker build -t gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA -f src/ledgerwriter/Dockerfile .
+        else
+          echo "Directory src/ledgerwriter not found, skipping build"
+          exit 0
+        fi
     id: 'build-ledgerwriter'
-    waitFor: ['-']
+    waitFor: ['list-src']
   
-  # Build balancereader image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA', './src/balancereader']
-    id: 'build-balancereader'
-    waitFor: ['-']
-  
-  # Build transactionhistory image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA', './src/transactionhistory']
-    id: 'build-transactionhistory'
-    waitFor: ['-']
-
-  # Push images to Container Registry
+  # Push frontend image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
     waitFor: ['build-frontend']
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA']
-    waitFor: ['build-ledgerwriter']
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA']
-    waitFor: ['build-balancereader']
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA']
-    waitFor: ['build-transactionhistory']
 
   # Get GKE credentials
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -161,7 +156,7 @@ steps:
     id: 'get-credentials'
     waitFor: ['-']
 
-  # Update deployments
+  # Update frontend deployment
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
     - 'set'
@@ -169,28 +164,9 @@ steps:
     - 'deployment/frontend'
     - 'frontend=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
     waitFor: ['get-credentials', 'build-frontend']
-  
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-    - 'set'
-    - 'image'
-    - 'deployment/ledgerwriter'
-    - 'ledgerwriter=gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA'
-    waitFor: ['get-credentials', 'build-ledgerwriter']
-  
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-    - 'set'
-    - 'image'
-    - 'deployment/balancereader'
-    - 'balancereader=gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA'
-    waitFor: ['get-credentials', 'build-balancereader']
 
 images:
   - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
-  - 'gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA'
-  - 'gcr.io/$PROJECT_ID/balancereader:$SHORT_SHA'
-  - 'gcr.io/$PROJECT_ID/transactionhistory:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
