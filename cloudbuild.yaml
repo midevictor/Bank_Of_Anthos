@@ -121,11 +121,14 @@ steps:
     waitFor: ['list-root']
 
 
+
   # Build frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '-f', 'src/frontend/Dockerfile', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '.']
+    dir: 'src/frontend'
     id: 'build-frontend'
     waitFor: ['list-src']
+
 
   # Build ledgerwriter image (if exists)
   - name: 'gcr.io/cloud-builders/docker'
