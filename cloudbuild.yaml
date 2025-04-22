@@ -120,50 +120,12 @@ steps:
     id: 'list-src'
     waitFor: ['list-root']
 
-
-
-  # Build frontend image
-  # - name: 'gcr.io/cloud-builders/docker'
-  #   args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '.']
-  #   dir: 'src/frontend'
-  #   id: 'build-frontend'
-  #   waitFor: ['list-src']
-
- 
-
   # Build frontend image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '.']
     dir: 'src/frontend'
     id: 'build-frontend'
     waitFor: ['list-src']
-
-  # Get GKE credentials
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-    - 'container'
-    - 'clusters'
-    - 'get-credentials'
-    - 'bank-of-anthos'
-    - '--zone=us-central1'
-    - '--project=$PROJECT_ID'
-    id: 'get-credentials'
-    waitFor: ['-']
-
-  # Update frontend deployment
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-    - 'set'
-    - 'image'
-    - 'deployment/frontend'
-    - 'frontend=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
-    waitFor: ['get-credentials', 'build-frontend']
-    env:
-    - 'CLOUDSDK_COMPUTE_REGION=us-central1'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
-
-
-
 
   # Build ledgerwriter image (if exists)
   - name: 'gcr.io/cloud-builders/docker'
@@ -179,7 +141,7 @@ steps:
         fi
     id: 'build-ledgerwriter'
     waitFor: ['list-src']
-  
+
   # Push frontend image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
@@ -205,6 +167,9 @@ steps:
     - 'deployment/frontend'
     - 'frontend=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
     waitFor: ['get-credentials', 'build-frontend']
+    env:
+    - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
 
 images:
   - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
