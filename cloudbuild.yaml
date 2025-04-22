@@ -165,7 +165,7 @@ steps:
     - 'set'
     - 'image'
     - 'deployment/frontend'
-    - 'frontend=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+    - 'front=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
     waitFor: ['get-credentials', 'build-frontend']
     env:
     - 'CLOUDSDK_COMPUTE_REGION=us-central1'
