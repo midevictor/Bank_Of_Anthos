@@ -151,7 +151,7 @@ steps:
     - 'clusters'
     - 'get-credentials'
     - 'bank-of-anthos'
-    - '--zone=us-central1-a'
+    - '--zone=us-central1'
     - '--project=$PROJECT_ID'
     id: 'get-credentials'
     waitFor: ['-']
