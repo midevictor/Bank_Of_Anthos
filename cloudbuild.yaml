@@ -83,6 +83,9 @@
 # options:
 #   logging: CLOUD_LOGGING_ONLY
 
+
+
+
 # Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -234,32 +237,6 @@ substitutions:
   _REGION: us-central1
   _ZONE: us-central1
   _REPOSITORY: bank-of-anthos
-
-# Configure triggers to only run specific steps based on changed files
-triggers:
-  - includedFiles:
-      - 'src/frontend/**'
-    name: 'build-frontend'
-    
-  - includedFiles:
-      - 'src/accounts-db/**'
-    name: 'build-accounts-db'
-    
-  - includedFiles:
-      - 'src/ledger-db/**'
-    name: 'build-ledger-db'
-    
-  - includedFiles:
-      - 'src/ledgerwriter/**'
-    name: 'build-ledgerwriter'
-    
-  - includedFiles:
-      - 'src/balancereader/**'
-    name: 'build-balancereader'
-    
-  - includedFiles:
-      - 'src/transactionhistory/**'
-    name: 'build-transactionhistory'
 
 options:
   dynamicSubstitutions: true
