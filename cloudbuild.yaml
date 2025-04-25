@@ -1,92 +1,5 @@
 
-# # Copyright 2022 Google LLC
-# #
-# # Licensed under the Apache License, Version 2.0 (the "License");
-# # you may not use this file except in compliance with the License.
-# # You may obtain a copy of the License at
-# #
-# #      http://www.apache.org/licenses/LICENSE-2.0
-# #
-# # Unless required by applicable law or agreed to in writing, software
-# # distributed under the License is distributed on an "AS IS" BASIS,
-# # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# # See the License for the specific language governing permissions and
-# # limitations under the License.
-
-# steps:
-#   # List directory contents to debug
-#   - name: 'gcr.io/cloud-builders/gcloud'
-#     entrypoint: 'bash'
-#     args: ['-c', 'ls -la']
-#     id: 'list-root'
-
-#   - name: 'gcr.io/cloud-builders/gcloud'
-#     entrypoint: 'bash'
-#     args: ['-c', 'ls -la src']
-#     id: 'list-src'
-#     waitFor: ['list-root']
-
-#   # Build frontend image
-#   - name: 'gcr.io/cloud-builders/docker'
-#     args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '.']
-#     dir: 'src/frontend'
-#     id: 'build-frontend'
-#     waitFor: ['list-src']
-
-#   # Build ledgerwriter image (if exists)
-#   - name: 'gcr.io/cloud-builders/docker'
-#     entrypoint: 'bash'
-#     args: 
-#       - '-c'
-#       - |
-#         if [ -d "src/ledgerwriter" ]; then
-#           docker build -t gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA -f src/ledgerwriter/Dockerfile .
-#         else
-#           echo "Directory src/ledgerwriter not found, skipping build"
-#           exit 0
-#         fi
-#     id: 'build-ledgerwriter'
-#     waitFor: ['list-src']
-
-#   # Push frontend image to Container Registry
-#   - name: 'gcr.io/cloud-builders/docker'
-#     args: ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
-#     waitFor: ['build-frontend']
-
-#   # Get GKE credentials
-#   - name: 'gcr.io/cloud-builders/gcloud'
-#     args:
-#     - 'container'
-#     - 'clusters'
-#     - 'get-credentials'
-#     - 'bank-of-anthos'
-#     - '--zone=us-central1'
-#     - '--project=$PROJECT_ID'
-#     id: 'get-credentials'
-#     waitFor: ['-']
-
-#   # Update frontend deployment
-#   - name: 'gcr.io/cloud-builders/kubectl'
-#     args:
-#     - 'set'
-#     - 'image'
-#     - 'deployment/frontend'
-#     - 'front=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
-#     waitFor: ['get-credentials', 'build-frontend']
-#     env:
-#     - 'CLOUDSDK_COMPUTE_REGION=us-central1'
-#     - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
-
-# images:
-#   - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
-
-# options:
-#   logging: CLOUD_LOGGING_ONLY
-
-
-
-
-# Copyright 2024 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,74 +17,41 @@ steps:
   # List directory contents to debug
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
+    args: ['-c', 'ls -la']
+    id: 'list-root'
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
     args: ['-c', 'ls -la src']
     id: 'list-src'
+    waitFor: ['list-root']
 
-  # Frontend Service
+  # Build frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-frontend'
-    args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/frontend:${COMMIT_SHA}'
-      - '.'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA', '.']
     dir: 'src/frontend'
-    waitFor: ['-']
+    id: 'build-frontend'
+    waitFor: ['list-src']
 
-  # Accounts DB Service
+  # Build ledgerwriter image (if exists)
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-accounts-db'
-    args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/accounts-db:${COMMIT_SHA}'
-      - '.'
-    dir: 'src/accounts-db'
-    waitFor: ['-']
-
-  # Ledger DB Service
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-ledger-db'
-    args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/ledger-db:${COMMIT_SHA}'
-      - '.'
-    dir: 'src/ledger-db'
-    waitFor: ['-']
-
-  # Ledger Writer Service
-  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        if [ -d "src/ledgerwriter" ]; then
+          docker build -t gcr.io/$PROJECT_ID/ledgerwriter:$SHORT_SHA -f src/ledgerwriter/Dockerfile .
+        else
+          echo "Directory src/ledgerwriter not found, skipping build"
+          exit 0
+        fi
     id: 'build-ledgerwriter'
-    args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/ledgerwriter:${COMMIT_SHA}'
-      - '.'
-    dir: 'src/ledgerwriter'
-    waitFor: ['-']
+    waitFor: ['list-src']
 
-  # Balance Reader Service
+  # Push frontend image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-balancereader'
-    args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/balancereader:${COMMIT_SHA}'
-      - '.'
-    dir: 'src/balancereader'
-    waitFor: ['-']
-
-  # Transaction History Service
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-transactionhistory'
-    args:
-      - 'build'
-      - '-t'
-      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/transactionhistory:${COMMIT_SHA}'
-      - '.'
-    dir: 'src/transactionhistory'
-    waitFor: ['-']
+    args: ['push', 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA']
+    waitFor: ['build-frontend']
 
   # Get GKE credentials
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -180,64 +60,28 @@ steps:
     - 'clusters'
     - 'get-credentials'
     - 'bank-of-anthos'
-    - '--zone=${_ZONE}'
+    - '--zone=us-central1'
     - '--project=$PROJECT_ID'
     id: 'get-credentials'
     waitFor: ['-']
 
-  # Deploy Frontend
+  # Update frontend deployment
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
     - 'set'
     - 'image'
     - 'deployment/frontend'
-    - 'front=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/frontend:${COMMIT_SHA}'
-    waitFor: ['build-frontend', 'get-credentials']
+    - 'front=gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+    waitFor: ['get-credentials', 'build-frontend']
     env:
-    - 'CLOUDSDK_COMPUTE_ZONE=${_ZONE}'
+    - 'CLOUDSDK_COMPUTE_REGION=us-central1'
     - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
 
-  # Deploy Accounts DB
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-    - 'set'
-    - 'image'
-    - 'deployment/accounts-db'
-    - 'accounts-db=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/accounts-db:${COMMIT_SHA}'
-    waitFor: ['build-accounts-db', 'get-credentials']
-    env:
-    - 'CLOUDSDK_COMPUTE_ZONE=${_ZONE}'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
-
-  # Deploy Ledger Writer
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-    - 'set'
-    - 'image'
-    - 'deployment/ledgerwriter'
-    - 'ledgerwriter=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/ledgerwriter:${COMMIT_SHA}'
-    waitFor: ['build-ledgerwriter', 'get-credentials']
-    env:
-    - 'CLOUDSDK_COMPUTE_ZONE=${_ZONE}'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
-
-  # Deploy Balance Reader
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-    - 'set'
-    - 'image'
-    - 'deployment/balancereader'
-    - 'balancereader=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/balancereader:${COMMIT_SHA}'
-    waitFor: ['build-balancereader', 'get-credentials']
-    env:
-    - 'CLOUDSDK_COMPUTE_ZONE=${_ZONE}'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=bank-of-anthos'
-
-substitutions:
-  _REGION: us-central1
-  _ZONE: us-central1
-  _REPOSITORY: bank-of-anthos
+images:
+  - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
 
 options:
-  dynamicSubstitutions: true
   logging: CLOUD_LOGGING_ONLY
+
+
+
