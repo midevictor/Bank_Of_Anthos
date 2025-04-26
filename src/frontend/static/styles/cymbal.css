@@ -459,22 +459,6 @@ label {
 }
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-  .container {
-      padding: 1rem;
-  }
-  
-  .card {
-      margin: 0;
-  }
-  
-  .header-title {
-      font-size: 1.75rem;
-  }
-}
-
-
-/* RESPONSIVE */
 @media (max-width: 1200px) {
   .container {
     max-width: 95%;
