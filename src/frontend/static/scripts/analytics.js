@@ -749,57 +749,57 @@ function processBudgetData(history) {
     };
 }
 
-// function processTransactionTypes(history) {
-//     const types = {
-//         moneyIn: 0,
-//         moneyOut: 0,
-//         transfers: 0
-//     };
-
-//     history.forEach(transaction => {
-//         const amount = Math.abs(transaction.amount) / 100;
-//         if (transaction.amount > 0) {
-//             types.moneyIn += amount;
-//         } else if (transaction.toAccountNum === transaction.fromAccountNum) {
-//             types.transfers += amount;
-//         } else if (transaction.amount < 0) {
-//             types.moneyOut += amount;
-//         }
-//     });
-
-//     return Object.values(types);
-// }
 function processTransactionTypes(history) {
-    let deposits = 0;
-    let withdrawals = 0;
-    let transfers = 0;
-    let payments = 0;
+    const types = {
+        moneyIn: 0,
+        moneyOut: 0,
+        transfers: 0
+    };
 
     history.forEach(transaction => {
         const amount = Math.abs(transaction.amount) / 100;
-        
-        // If money is coming to our account
-        if (transaction.toAccountNum === window.accountId) {
-            if (transaction.type === 'DEPOSIT') {
-                deposits += amount;
-            } else if (transaction.type === 'TRANSFER') {
-                transfers += amount;
-            }
-        } 
-        // If money is going out from our account
-        else {
-            if (transaction.type === 'WITHDRAWAL') {
-                withdrawals += amount;
-            } else if (transaction.type === 'PAYMENT') {
-                payments += amount;
-            } else if (transaction.type === 'TRANSFER') {
-                transfers += amount;
-            }
+        if (transaction.amount > 0) {
+            types.moneyIn += amount;
+        } else if (transaction.toAccountNum === transaction.fromAccountNum) {
+            types.transfers += amount;
+        } else if (transaction.amount < 0) {
+            types.moneyOut += amount;
         }
     });
 
-    return [deposits, withdrawals, transfers, payments];
+    return Object.values(types);
 }
+// function processTransactionTypes(history) {
+//     let deposits = 0;
+//     let withdrawals = 0;
+//     let transfers = 0;
+//     let payments = 0;
+
+//     history.forEach(transaction => {
+//         const amount = Math.abs(transaction.amount) / 100;
+        
+//         // If money is coming to our account
+//         if (transaction.toAccountNum === window.accountId) {
+//             if (transaction.type === 'DEPOSIT') {
+//                 deposits += amount;
+//             } else if (transaction.type === 'TRANSFER') {
+//                 transfers += amount;
+//             }
+//         } 
+//         // If money is going out from our account
+//         else {
+//             if (transaction.type === 'WITHDRAWAL') {
+//                 withdrawals += amount;
+//             } else if (transaction.type === 'PAYMENT') {
+//                 payments += amount;
+//             } else if (transaction.type === 'TRANSFER') {
+//                 transfers += amount;
+//             }
+//         }
+//     });
+
+//     return [deposits, withdrawals, transfers, payments];
+// }
 
 function processFinancialTrends(history) {
     const trends = {};
