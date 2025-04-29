@@ -704,11 +704,13 @@ function processBudgetData(history) {
     const currentMonth = new Date().getMonth();
     let monthlyDeposits = 0;
     let monthlySpent = 0;
+    console.log(history[0]);
 
     history.forEach(transaction => {
         const date = new Date(transaction.timestamp);
         if (date.getMonth() === currentMonth) {
             const amount = Math.abs(transaction.amount) / 100;
+            
             if (transaction.amount > 0) {
                 monthlyDeposits += amount;
             } else if (transaction.amount < 0) {
