@@ -7,7 +7,7 @@ function processMonthlySpending(history) {
     // Initialize last 6 months
     for (let i = 5; i >= 0; i--) {
         const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        months[monthNames[d.getMonth()]] = { credits: 0, debits: 0 };
+        months[monthNames[d.getMonth()]] = { incoming: 0, outgoing: 0 };
     }
 
     // Process transactions
@@ -16,62 +16,70 @@ function processMonthlySpending(history) {
         const monthName = monthNames[date.getMonth()];
         if (months.hasOwnProperty(monthName)) {
             const amount = Math.abs(transaction.amount) / 100;
-            if (transaction.type === 'credit') {
-                months[monthName].credits += amount;
-            } else if (transaction.type === 'debit') {
-                months[monthName].debits += amount;
+            // Check if this is an incoming or outgoing transaction
+            if (transaction.toAccountNum === window.accountId) {
+                months[monthName].incoming += amount;
+            } else if (transaction.fromAccountNum === window.accountId) {
+                months[monthName].outgoing += amount;
             }
         }
     });
 
+    // Return total activity for each month
     return {
         labels: Object.keys(months),
-        data: Object.values(months).map(m => m.credits + m.debits)
+        data: Object.values(months).map(m => m.incoming + m.outgoing)
     };
 }
 
 function processBudgetData(history) {
     const currentMonth = new Date().getMonth();
-    let monthlyCredits = 0;
-    let monthlyDebits = 0;
+    let income = 0;
+    let expenses = 0;
 
     history.forEach(transaction => {
         const date = new Date(transaction.timestamp);
         if (date.getMonth() === currentMonth) {
             const amount = Math.abs(transaction.amount) / 100;
-            if (transaction.type === 'credit') {
-                monthlyCredits += amount;
-            } else if (transaction.type === 'debit') {
-                monthlyDebits += amount;
+            // Determine if money is coming in or going out based on account numbers
+            if (transaction.toAccountNum === window.accountId) {
+                income += amount;
+            } else if (transaction.fromAccountNum === window.accountId) {
+                expenses += amount;
             }
         }
     });
 
     return {
-        spent: monthlyDebits,
-        remaining: monthlyCredits - monthlyDebits
+        spent: expenses,
+        remaining: income - expenses
     };
 }
 
 function processTransactionTypes(history) {
     const types = {
-        credits: 0,
-        debits: 0,
+        incoming: 0,
+        outgoing: 0,
         transfers: 0
     };
 
     history.forEach(transaction => {
         const amount = Math.abs(transaction.amount) / 100;
+        // Internal transfer
         if (transaction.toAccountNum === transaction.fromAccountNum) {
             types.transfers += amount;
-        } else if (transaction.type === 'credit') {
-            types.credits += amount;
-        } else if (transaction.type === 'debit') {
-            types.debits += amount;
+        }
+        // Money coming in
+        else if (transaction.toAccountNum === window.accountId) {
+            types.incoming += amount;
+        }
+        // Money going out
+        else if (transaction.fromAccountNum === window.accountId) {
+            types.outgoing += amount;
         }
     });
 
-    return Object.values(types);
+    return [types.incoming, types.outgoing, types.transfers];
 }
 
 function processFinancialTrends(history) {
@@ -92,9 +100,9 @@ function processFinancialTrends(history) {
         const monthName = monthNames[date.getMonth()];
         if (trends.hasOwnProperty(monthName)) {
             const amount = Math.abs(transaction.amount) / 100;
-            if (transaction.type === 'credit') {
+            if (transaction.toAccountNum === window.accountId) {
                 trends[monthName].income += amount;
-            } else if (transaction.type === 'debit') {
+            } else if (transaction.fromAccountNum === window.accountId) {
                 trends[monthName].expenses += amount;
             }
         }
@@ -178,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(investmentCtx, {
         type: 'pie',
         data: {
-            labels: ['Credits (In)', 'Debits (Out)', 'Transfers'],
+            labels: ['Money In', 'Money Out', 'Transfers'],
             datasets: [{
                 data: processTransactionTypes(history),
                 backgroundColor: ['#002d6e', '#246df0', '#64748b']
