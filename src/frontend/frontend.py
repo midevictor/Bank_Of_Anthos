@@ -261,6 +261,49 @@ def create_app():
                                 msg='Payment failed',
                                 _external=True,
                                 _scheme=app.config['SCHEME']))
+    @app.route("/analytics")
+    def analytics():
+        """
+        Renders analytics page. Redirects to /login if token is not valid
+        """
+        token = request.cookies.get(app.config['TOKEN_NAME'])
+        if not verify_token(token):
+            # user isn't authenticated
+            app.logger.debug('User isn\'t authenticated. Redirecting to login page.')
+            return redirect(url_for('login_page',
+                                    _external=True,
+                                    _scheme=app.config['SCHEME']))
+        token_data = decode_token(token)
+        display_name = token_data['name']
+        username = token_data['user']
+        account_id = token_data['acct']
+
+        # Get transaction history for analytics
+        hed = {'Authorization': 'Bearer ' + token}
+        api_response = None
+        try:
+            resp = requests.get(
+                f'{app.config["HISTORY_URI"]}/{account_id}',
+                headers=hed,
+                timeout=app.config['BACKEND_TIMEOUT']
+            )
+            resp.raise_for_status()
+            api_response = resp.json()
+        except requests.exceptions.RequestException as err:
+            app.logger.error('Error getting transaction history: %s', str(err))
+
+        return render_template('analytics.html',
+                           account_id=account_id,
+                           bank_name=os.getenv('BANK_NAME', 'Bank of Anthos'),
+                           cluster_name=cluster_name,
+                           cymbal_logo=os.getenv('CYMBAL_LOGO', 'false'),
+                           history=api_response,
+                           name=display_name,
+                           platform=platform,
+                           platform_display_name=platform_display_name,
+                           pod_name=pod_name,
+                           pod_zone=pod_zone)
+
 
     @app.route('/deposit', methods=['POST'])
     def deposit():
