@@ -61,8 +61,13 @@
       </div>
     </main>
 
+    
     {% include 'shared/footer.html' %}
     {% include 'shared/scripts.html' %}
+    <script type="text/javascript">
+        window.transactionHistory = JSON.parse('{{ history|tojson|safe }}');
+    </script>
     <script src="static/scripts/analytics.js"></script>
+
   </body>
 </html>

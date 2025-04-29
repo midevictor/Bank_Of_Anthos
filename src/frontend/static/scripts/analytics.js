@@ -1,14 +1,112 @@
+// // Initialize charts when document is ready
+// document.addEventListener('DOMContentLoaded', function() {
+//     // Spending Pattern Chart
+//     const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+//     new Chart(spendingCtx, {
+//         type: 'bar',
+//         data: {
+//             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+//             datasets: [{
+//                 label: 'Monthly Spending',
+//                 data: [1200, 1900, 1500, 1800, 2000, 1700],
+//                 backgroundColor: '#002d6e'
+//             }]
+//         },
+//         options: {
+//             responsive: true,
+//             scales: {
+//                 y: {
+//                     beginAtZero: true
+//                 }
+//             }
+//         }
+//     });
+
+//     // Budget Tracking Chart
+//     const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+//     new Chart(budgetCtx, {
+//         type: 'doughnut',
+//         data: {
+//             labels: ['Spent', 'Remaining'],
+//             datasets: [{
+//                 data: [70, 30],
+//                 backgroundColor: ['#002d6e', '#246df0']
+//             }]
+//         },
+//         options: {
+//             responsive: true
+//         }
+//     });
+
+//     // Investment Portfolio Chart
+//     const investmentCtx = document.getElementById('investmentChart').getContext('2d');
+//     new Chart(investmentCtx, {
+//         type: 'pie',
+//         data: {
+//             labels: ['Stocks', 'Bonds', 'Real Estate', 'Cash'],
+//             datasets: [{
+//                 data: [40, 30, 20, 10],
+//                 backgroundColor: ['#002d6e', '#246df0', '#64748b', '#e2e8f0']
+//             }]
+//         },
+//         options: {
+//             responsive: true
+//         }
+//     });
+
+//     // Financial Trends Chart
+//     const trendCtx = document.getElementById('trendChart').getContext('2d');
+//     new Chart(trendCtx, {
+//         type: 'line',
+//         data: {
+//             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+//             datasets: [{
+//                 label: 'Income',
+//                 data: [3000, 3200, 3400, 3300, 3600, 3800],
+//                 borderColor: '#002d6e',
+//                 tension: 0.1
+//             }, {
+//                 label: 'Expenses',
+//                 data: [2800, 2900, 2700, 3000, 2800, 2900],
+//                 borderColor: '#246df0',
+//                 tension: 0.1
+//             }]
+//         },
+//         options: {
+//             responsive: true,
+//             scales: {
+//                 y: {
+//                     beginAtZero: true
+//                 }
+//             }
+//         }
+//     });
+// });
+
+
 // Initialize charts when document is ready
 document.addEventListener('DOMContentLoaded', function() {
+    // Process transaction history data
+    const history = window.transactionHistory || [];
+    
+    // Process monthly spending data
+    const monthlySpending = processMonthlySpending(history);
+    
+    // Process budget data
+    const budgetData = processBudgetData(history);
+    
+    // Process financial trends
+    const trends = processFinancialTrends(history);
+
     // Spending Pattern Chart
     const spendingCtx = document.getElementById('spendingChart').getContext('2d');
     new Chart(spendingCtx, {
         type: 'bar',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: monthlySpending.labels,
             datasets: [{
                 label: 'Monthly Spending',
-                data: [1200, 1900, 1500, 1800, 2000, 1700],
+                data: monthlySpending.data,
                 backgroundColor: '#002d6e'
             }]
         },
@@ -16,7 +114,12 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
                 }
             }
         }
@@ -29,12 +132,21 @@ document.addEventListener('DOMContentLoaded', function() {
         data: {
             labels: ['Spent', 'Remaining'],
             datasets: [{
-                data: [70, 30],
+                data: [budgetData.spent, budgetData.remaining],
                 backgroundColor: ['#002d6e', '#246df0']
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -43,14 +155,23 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(investmentCtx, {
         type: 'pie',
         data: {
-            labels: ['Stocks', 'Bonds', 'Real Estate', 'Cash'],
+            labels: ['Deposits', 'Withdrawals', 'Transfers', 'Payments'],
             datasets: [{
-                data: [40, 30, 20, 10],
+                data: processTransactionTypes(history),
                 backgroundColor: ['#002d6e', '#246df0', '#64748b', '#e2e8f0']
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toFixed(2);
+                        }
+                    }
+                }
+            }
         }
     });
 
@@ -59,15 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(trendCtx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: trends.labels,
             datasets: [{
                 label: 'Income',
-                data: [3000, 3200, 3400, 3300, 3600, 3800],
+                data: trends.income,
                 borderColor: '#002d6e',
                 tension: 0.1
             }, {
                 label: 'Expenses',
-                data: [2800, 2900, 2700, 3000, 2800, 2900],
+                data: trends.expenses,
                 borderColor: '#246df0',
                 tension: 0.1
             }]
@@ -76,9 +197,114 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
                 }
             }
         }
     });
 });
+
+// Helper functions to process transaction data
+function processMonthlySpending(history) {
+    const months = {};
+    const currentDate = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        months[monthNames[d.getMonth()]] = 0;
+    }
+
+    // Process transactions
+    history.forEach(transaction => {
+        const date = new Date(transaction.timestamp);
+        const monthName = monthNames[date.getMonth()];
+        if (months.hasOwnProperty(monthName)) {
+            months[monthName] += Math.abs(transaction.amount) / 100; // Convert cents to dollars
+        }
+    });
+
+    return {
+        labels: Object.keys(months),
+        data: Object.values(months)
+    };
+}
+
+function processBudgetData(history) {
+    const monthlyBudget = 5000; // Example budget
+    const currentMonth = new Date().getMonth();
+    let spent = 0;
+
+    history.forEach(transaction => {
+        const date = new Date(transaction.timestamp);
+        if (date.getMonth() === currentMonth) {
+            spent += Math.abs(transaction.amount) / 100;
+        }
+    });
+
+    return {
+        spent: spent,
+        remaining: Math.max(0, monthlyBudget - spent)
+    };
+}
+
+function processTransactionTypes(history) {
+    const types = {
+        deposits: 0,
+        withdrawals: 0,
+        transfers: 0,
+        payments: 0
+    };
+
+    history.forEach(transaction => {
+        const amount = Math.abs(transaction.amount) / 100;
+        if (transaction.amount > 0) {
+            types.deposits += amount;
+        } else if (transaction.toAccountNum === transaction.fromAccountNum) {
+            types.transfers += amount;
+        } else {
+            types.payments += amount;
+        }
+    });
+
+    return Object.values(types);
+}
+
+function processFinancialTrends(history) {
+    const trends = {};
+    const currentDate = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const monthName = monthNames[d.getMonth()];
+        trends[monthName] = { income: 0, expenses: 0 };
+    }
+
+    // Process transactions
+    history.forEach(transaction => {
+        const date = new Date(transaction.timestamp);
+        const monthName = monthNames[date.getMonth()];
+        if (trends.hasOwnProperty(monthName)) {
+            const amount = Math.abs(transaction.amount) / 100;
+            if (transaction.amount > 0) {
+                trends[monthName].income += amount;
+            } else {
+                trends[monthName].expenses += amount;
+            }
+        }
+    });
+
+    return {
+        labels: Object.keys(trends),
+        income: Object.values(trends).map(t => t.income),
+        expenses: Object.values(trends).map(t => t.expenses)
+    };
+}
