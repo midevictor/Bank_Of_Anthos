@@ -42,9 +42,9 @@ function processBudgetData(history) {
         if (date.getMonth() === currentMonth) {
             const amount = Math.abs(transaction.amount) / 100;
             // Determine if money is coming in or going out based on account numbers
-            if (transaction.toAccountNum === window.accountId) {
+            if (transaction.toAccountNum === transaction.fromAccountNum) {
                 income += amount;
-            } else if (transaction.fromAccountNum === window.accountId) {
+            } else if (transaction.fromAccountNum !== transaction.fromAccountNum) {
                 expenses += amount;
             }
         }
@@ -70,11 +70,11 @@ function processTransactionTypes(history) {
             types.transfers += amount;
         }
         // Money coming in
-        else if (transaction.toAccountNum === window.accountId) {
+        else if (transaction.toAccountNum === transaction.fromAccountNum) {
             types.incoming += amount;
         }
         // Money going out
-        else if (transaction.fromAccountNum === window.accountId) {
+        else if (transaction.fromAccountNum !== transaction.fromAccountNum) {
             types.outgoing += amount;
         }
     });
