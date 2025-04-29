@@ -1,119 +1,3 @@
-// Helper functions to process transaction data
-function processMonthlySpending(history) {
-    const months = {};
-    const currentDate = new Date();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    // Initialize last 6 months
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        months[monthNames[d.getMonth()]] = { incoming: 0, outgoing: 0 };
-    }
-
-    // Process transactions
-    history.forEach(transaction => {
-        const date = new Date(transaction.timestamp);
-        const monthName = monthNames[date.getMonth()];
-        if (months.hasOwnProperty(monthName)) {
-            const amount = Math.abs(transaction.amount) / 100;
-            // Check if this is an incoming or outgoing transaction
-            if (transaction.toAccountNum === window.accountId) {
-                months[monthName].incoming += amount;
-            } else if (transaction.fromAccountNum === window.accountId) {
-                months[monthName].outgoing += amount;
-            }
-        }
-    });
-
-    // Return total activity for each month
-    return {
-        labels: Object.keys(months),
-        data: Object.values(months).map(m => m.incoming + m.outgoing)
-    };
-}
-
-function processBudgetData(history) {
-    const currentMonth = new Date().getMonth();
-    let income = 0;
-    let expenses = 0;
-
-    history.forEach(transaction => {
-        const date = new Date(transaction.timestamp);
-        if (date.getMonth() === currentMonth) {
-            const amount = Math.abs(transaction.amount) / 100;
-            // Determine if money is coming in or going out based on account numbers
-            if (transaction.toAccountNum === transaction.fromAccountNum) {
-                income += amount;
-            } else if (transaction.fromAccountNum !== transaction.fromAccountNum) {
-                expenses += amount;
-            }
-        }
-    });
-
-    return {
-        spent: expenses,
-        remaining: income - expenses
-    };
-}
-
-function processTransactionTypes(history) {
-    const types = {
-        incoming: 0,
-        outgoing: 0,
-        transfers: 0
-    };
-
-    history.forEach(transaction => {
-        const amount = Math.abs(transaction.amount) / 100;
-        // Internal transfer
-        if (transaction.toAccountNum === transaction.fromAccountNum) {
-            types.transfers += amount;
-        }
-        // Money coming in
-        else if (transaction.toAccountNum === transaction.fromAccountNum) {
-            types.incoming += amount;
-        }
-        // Money going out
-        else if (transaction.fromAccountNum !== transaction.fromAccountNum) {
-            types.outgoing += amount;
-        }
-    });
-
-    return [types.incoming, types.outgoing, types.transfers];
-}
-
-function processFinancialTrends(history) {
-    const trends = {};
-    const currentDate = new Date();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    // Initialize last 6 months
-    for (let i = 5; i >= 0; i--) {
-        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        const monthName = monthNames[d.getMonth()];
-        trends[monthName] = { income: 0, expenses: 0 };
-    }
-
-    // Process transactions
-    history.forEach(transaction => {
-        const date = new Date(transaction.timestamp);
-        const monthName = monthNames[date.getMonth()];
-        if (trends.hasOwnProperty(monthName)) {
-            const amount = Math.abs(transaction.amount) / 100;
-            if (transaction.toAccountNum === window.accountId) {
-                trends[monthName].income += amount;
-            } else if (transaction.fromAccountNum === window.accountId) {
-                trends[monthName].expenses += amount;
-            }
-        }
-    });
-
-    return {
-        labels: Object.keys(trends),
-        income: Object.values(trends).map(t => t.income),
-        expenses: Object.values(trends).map(t => t.expenses)
-    };
-}
 
 // Initialize charts when document is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -186,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(investmentCtx, {
         type: 'pie',
         data: {
-            labels: ['Money In', 'Money Out', 'Transfers'],
+            labels: ['Money In', 'Money Out', 'Account Transfers'],
             datasets: [{
                 data: processTransactionTypes(history),
                 backgroundColor: ['#002d6e', '#246df0', '#64748b']
@@ -239,3 +123,170 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Helper functions to process transaction data
+function processMonthlySpending(history) {
+    const months = {};
+    const currentDate = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        months[monthNames[d.getMonth()]] = { deposits: 0, payments: 0 };
+    }
+
+    // Process transactions - track both deposits and payments
+    history.forEach(transaction => {
+        const date = new Date(transaction.timestamp);
+        const monthName = monthNames[date.getMonth()];
+        if (months.hasOwnProperty(monthName)) {
+            const amount = Math.abs(transaction.amount) / 100;
+            if (transaction.amount > 0) {
+                months[monthName].deposits += amount;
+            } else if (transaction.amount < 0) {
+                months[monthName].payments += amount;
+            }
+        }
+    });
+
+    // Combine deposits and payments for total monthly activity
+    return {
+        labels: Object.keys(months),
+        data: Object.values(months).map(m => m.deposits + m.payments)
+    };
+}
+
+// function processBudgetData(history) {
+//     const currentMonth = new Date().getMonth();
+//     let monthlyDeposits = 0;
+//     let monthlySpent = 0;
+//     console.log(history[0]);
+
+//     history.forEach(transaction => {
+//         const date = new Date(transaction.timestamp);
+//         if (date.getMonth() === currentMonth) {
+//             const amount = Math.abs(transaction.amount) / 100;
+            
+//             if (transaction.amount > 0) {
+//                 monthlyDeposits += amount;
+//             } else if (transaction.amount < 0) {
+//                 monthlySpent += amount;
+//             }
+//         }
+//     });
+
+//     return {
+//         spent: monthlySpent,
+//         remaining: monthlyDeposits - monthlySpent
+//     };
+// }
+function processBudgetData(history) {
+    const currentMonth = new Date().getMonth();
+    let monthlyDeposits = 0;
+    let monthlySpent = 0;
+
+    history.forEach(transaction => {
+        const date = new Date(transaction.timestamp);
+        if (date.getMonth() === currentMonth) {
+            const amount = Math.abs(transaction.amount) / 100;
+            
+            // Check if this is a credit (money received) or debit (money spent)
+            if (transaction.toAccountNum === transaction.fromAccountNum) {
+                monthlyDeposits += amount;
+            } else {
+                monthlySpent += amount;
+            }
+        }
+    });
+
+    return {
+        spent: monthlySpent,
+        remaining: monthlyDeposits - monthlySpent
+    };
+}
+
+function processTransactionTypes(history) {
+    const types = {
+        moneyIn: 0,
+        moneyOut: 0,
+        transfers: 0
+    };
+
+    history.forEach(transaction => {
+        const amount = Math.abs(transaction.amount) / 100;
+        if (transaction.toAccountNum === transaction.fromAccountNum) {
+            types.moneyIn += amount;
+        } else if (transaction.toAccountNum === transaction.fromAccountNum) {
+            types.transfers += amount;
+        } else if (transaction.toAccountNum !== transaction.fromAccountNum) {
+            types.moneyOut += amount;
+        }
+    });
+
+    return Object.values(types);
+}
+// function processTransactionTypes(history) {
+//     let deposits = 0;
+//     let withdrawals = 0;
+//     let transfers = 0;
+//     let payments = 0;
+
+//     history.forEach(transaction => {
+//         const amount = Math.abs(transaction.amount) / 100;
+        
+//         // If money is coming to our account
+//         if (transaction.toAccountNum === window.accountId) {
+//             if (transaction.type === 'DEPOSIT') {
+//                 deposits += amount;
+//             } else if (transaction.type === 'TRANSFER') {
+//                 transfers += amount;
+//             }
+//         } 
+//         // If money is going out from our account
+//         else {
+//             if (transaction.type === 'WITHDRAWAL') {
+//                 withdrawals += amount;
+//             } else if (transaction.type === 'PAYMENT') {
+//                 payments += amount;
+//             } else if (transaction.type === 'TRANSFER') {
+//                 transfers += amount;
+//             }
+//         }
+//     });
+
+//     return [deposits, withdrawals, transfers, payments];
+// }
+
+function processFinancialTrends(history) {
+    const trends = {};
+    const currentDate = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const monthName = monthNames[d.getMonth()];
+        trends[monthName] = { income: 0, expenses: 0 };
+    }
+
+    // Process transactions
+    history.forEach(transaction => {
+        const date = new Date(transaction.timestamp);
+        const monthName = monthNames[date.getMonth()];
+        if (trends.hasOwnProperty(monthName)) {
+            const amount = Math.abs(transaction.amount) / 100;
+            if (transaction.amount > 0) {
+                trends[monthName].income += amount;
+            } else if (transaction.amount < 0) {
+                trends[monthName].expenses += amount;
+            }
+        }
+    });
+
+    return {
+        labels: Object.keys(trends),
+        income: Object.values(trends).map(t => t.income),
+        expenses: Object.values(trends).map(t => t.expenses)
+    };
+}
