@@ -132,24 +132,35 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Helper functions to process transaction data
 function processMonthlySpending(history) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlyTotals = new Array(12).fill(0);
-    const currentYear = new Date().getFullYear();
+    const months = {};
+    const currentDate = new Date();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        months[monthNames[d.getMonth()]] = { deposits: 0, payments: 0 };
+    }
 
+    // Process transactions - track both deposits and payments
     history.forEach(transaction => {
-        if (transaction.type === 'DEBIT') {
-            const date = new Date(transaction.timestamp);
-            if (date.getFullYear() === currentYear) {
-                monthlyTotals[date.getMonth()] += Math.abs(transaction.amount);
+        const date = new Date(transaction.timestamp);
+        const monthName = monthNames[date.getMonth()];
+        if (months.hasOwnProperty(monthName)) {
+            const amount = Math.abs(transaction.amount) / 100;
+            if (transaction.amount > 0) {
+                months[monthName].deposits += amount;
+            } else if (transaction.amount < 0) {
+                months[monthName].payments += amount;
             }
         }
     });
 
+    // Combine deposits and payments for total monthly activity
     return {
-        labels: months,
-        data: monthlyTotals
+        labels: Object.keys(months),
+        data: Object.values(months).map(m => m.deposits + m.payments)
     };
 }
 
